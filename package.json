@@ -9,11 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "image-size": "^1.0.2",
     "next": "13.3.1",
+    "photoswipe": "^5.3.7",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "react-photoswipe-gallery": "^2.2.7",
+    "sharp": "^0.32.0"
   },
   "devDependencies": {
+    "@types/node": "^18.15.13",
     "@types/react": "18.0.38",
     "eslint": "8.39.0",
     "eslint-config-next": "13.3.1",
