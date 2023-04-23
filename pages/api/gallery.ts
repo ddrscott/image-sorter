@@ -14,6 +14,7 @@ export default function handler(
     const directoryPath = process.env.IMAGE_PATH || '.';
 
     // run the `ls` command using exec
+    console.log(`Listing files in ${directoryPath}`)
     exec(`find ${directoryPath} -type f`, (err:any, output:string) => {
         // once the command has completed, the callback function is called
         if (err) {
