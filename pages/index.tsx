@@ -1,4 +1,6 @@
 import {useEffect, useState} from 'react';
+import { useRouter } from 'next/router';
+
 import 'photoswipe/dist/photoswipe.css'
 import { debounce } from '../lib/utils'
 
@@ -6,7 +8,10 @@ import { Gallery, Item } from 'react-photoswipe-gallery'
 
 const PAGE_SIZE = 100
 
-export default function MyGallery() {
+export default function MyGallery({imagePath}) {
+    const router = useRouter();
+    const {prompt} = router.query;
+
     const [isLoading, setLoading] = useState(true)
     const [images, setImages] = useState([])
     const [offset, setOffset] = useState(0)
@@ -18,14 +23,22 @@ export default function MyGallery() {
     }
 
     useEffect(() => {
+        if (offset > images.length) {
+            return
+        }
         setLoading(true)
-        fetch('/api/search?' + new URLSearchParams({ size: PAGE_SIZE, offset}))
+        const params = {size: PAGE_SIZE, offset}
+        if (prompt) {
+            params['prompt'] = prompt
+        }
+        fetch('/api/search?' + new URLSearchParams(params))
         .then((res) => res.json())
         .then((data) => {
             setImages([...images, ...data.hits.hits.map((hit) => ({
-                src: hit._source.image_path.replaceAll('/media/shared/www-data/', 'https://www.dataturd.com/'),
-                width: hit._source.size_1,
-                height: hit._source.size_2
+                src: hit._source.image_path.replaceAll(imagePath, '/api/images'),
+                width: hit._source.hires_upscale > 1 ? hit._source.size_1 * hit._source.hires_upscale : hit._source.size_1,
+                height: hit._source.hires_upscale > 1 ? hit._source.size_2 * hit._source.hires_upscale : hit._source.size_2,
+                _source: hit._source
             }))])
             setLoading(false)
         })
@@ -43,21 +56,34 @@ export default function MyGallery() {
             options={{
                 preload: [5, 5]
             }}
+            withCaption
         >
             {
                 images.map((image:any) => (
                     <Item
-                        key={image.src}
+                        key={`item-${image.src}`}
                         original={image.src}
+                        thumbnail={`${image.src}?width=256`}
                         width={image.width}
                         height={image.height}
+                        caption={image._source.prompt}
                     >
                         {({ ref, open }) => (
-                            <img ref={ref} onClick={open} loading="lazy" {...image} />
+                            <img ref={ref}
+                                onClick={open}
+                                key={`img-${image.src}`}
+                                src={`${image.src}?width=128`}
+                                loading="lazy"
+                            />
                         )}
                     </Item>
                 ))
             }
         </Gallery>
     </div>)
+}
+export async function getServerSideProps(context) {
+    return {
+        props: {imagePath: process.env.IMAGE_PATH}, // will be passed to the page component as props
+    }
 }

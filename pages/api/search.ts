@@ -16,21 +16,26 @@ export default async function handler(req, res) {
     const { prompt, size, offset } = req.query;
 
     try {
+        const query = {};
+        if (prompt) {
+            query['match'] = {
+                prompt: {
+                    query: prompt,
+                }
+            };
+        } else {
+            query['match_all'] = {};
+        }
         const body = await client.search({
             index: 'sd_images',
             from: offset || 0,
             size: size || 100,
             body: {
                 sort: [
-                    {
-                        "timestamp": {
-                            "order": "desc"
-                        }
-                    }
+                    { "_score": { "order": "desc" } },
+                    { "timestamp": { "order": "desc" } }
                 ],
-                query: {
-                    match_all: {}
-                },
+                query
             },
         });
         res.status(200).json(body);
