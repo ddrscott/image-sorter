@@ -13,18 +13,25 @@ const client = new Client({
 });
 
 export default async function handler(req, res) {
-    const { prompt, size, offset } = req.query;
+    const { prompt, size, offset, keywords } = req.query;
 
     try {
         const query = {};
+        const must = [];
+        if (keywords) {
+            keywords.split(',').forEach((keyword) => {
+                must.push({ term: { keywords: keyword } });
+            });
+        }
+
         if (prompt) {
-            query['match'] = {
-                prompt: {
-                    query: prompt,
-                }
-            };
+            must.push({match: { prompt }}) 
+        }
+
+        if (must.length > 0) {
+            query['bool'] = { must }
         } else {
-            query['match_all'] = {};
+            query['match_all'] = {}
         }
         const body = await client.search({
             index: 'sd_images',
